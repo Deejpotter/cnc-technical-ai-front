@@ -8,14 +8,26 @@ const ChatInterface: React.FC = () => {
   // Create a state variable to hold all messages
   const [messages, setMessages] = useState<Array<{type: 'user' | 'bot', content: string}>>([]);
 
-  // Function to handle form submission
-  const handleFormSubmit = (event: Event) => {
+  // Function to get user input
+  const getUserInput = () => {
+    const inputElement = document.getElementById('user-input') as HTMLInputElement;
+    return inputElement.value;
+  };
+
+  // Function to display user message, wrapped in its own useCallback
+  const displayUserMessage = useCallback((message: string) => {
+    // Add the new message to the messages state variable
+    setMessages([...messages, { type: 'user', content: `You: ${message}`}]);
+  }, [messages]); // Add messages as a dependency to resolve ESLint warning
+
+  // Function to handle form submission, wrapped in its own useCallback
+  const handleFormSubmit = useCallback((event: Event) => {
     event.preventDefault();
     const userInput = getUserInput();
     displayUserMessage(userInput);
     // Clear user input and display typing indicator
     // Fetch bot response logic will go here
-  };
+  }, [displayUserMessage]); // Add displayUserMessage as a dependency to resolve ESLint warning
 
   // Function to initialize chat event listeners
   const initializeChat = useCallback(() => {
@@ -34,25 +46,13 @@ const ChatInterface: React.FC = () => {
     
     // Focus on the user input field
     userInput.focus();
-  }, [handleFormSubmit]);
+  }, [handleFormSubmit]); // handleFormSubmit is now a dependency
 
   // Use useEffect to call initializeChat when the component mounts
   useEffect(() => {
     initializeChat();
   }, [initializeChat]);
 
-  // Function to get user input
-  const getUserInput = () => {
-    const inputElement = document.getElementById('user-input') as HTMLInputElement;
-    return inputElement.value;
-  };
-
-  // Function to display user message
-  const displayUserMessage = (message: string) => {
-    // Add the new message to the messages state variable
-    setMessages([...messages, { type: 'user', content: `You: ${message}`}]);
-  };
-  
   // The JSX returned here defines the layout of the chat interface
   return (
     // Main container for the entire chat interface
@@ -75,10 +75,10 @@ const ChatInterface: React.FC = () => {
           <div className="border rounded p-3" id="chat-container">
             {/* Inner Container for chat messages */}
             <div id="message-container">
-          {messages.map((message, index) => (
-          <ChatMessage key={index} type={message.type} message={message.content} />
-        ))}
-      </div>
+              {messages.map((message, index) => (
+                <ChatMessage key={index} type={message.type} message={message.content} />
+              ))}
+            </div>
           </div>
           {/* Form for user to input messages */}
           <form className="form-inline bg-white p-2" id="chat-form">
