@@ -5,7 +5,7 @@ import ChatInterface from './components/ChatInterface';
 
 function App() {
   return (
-    <div className="App">
+    <div className="app" data-testid="main-app">
       <ChatInterface />
     </div>
   );
