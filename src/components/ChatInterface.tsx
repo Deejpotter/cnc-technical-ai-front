@@ -20,13 +20,32 @@ const ChatInterface: React.FC = () => {
     setMessages([...messages, { type: 'user', content: `You: ${message}`}]);
   }, [messages]); // Add messages as a dependency to resolve ESLint warning
 
+  // Function to fetch bot response
+  const fetchBotResponse = async (userInput: string) : Promise<void> => {
+    const apiUrl = process.env.REACT_APP_API_URL || ''; // Get API URL from environment variable
+    const response = await fetch(`${apiUrl}/ask`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_message: userInput }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setMessages([...messages, { type: 'bot', content: `Bot: ${data.bot_response}`}]);
+    } else {
+      console.error('Failed to fetch bot response');
+    }
+  };
+
   // Function to handle form submission, wrapped in its own useCallback
-  const handleFormSubmit = useCallback((event: Event) => {
+  const handleFormSubmit = useCallback(async (event: Event) => {
     event.preventDefault();
     const userInput = getUserInput();
     displayUserMessage(userInput);
-    // Clear user input and display typing indicator
-    // Fetch bot response logic will go here
+    await fetchBotResponse(userInput); // Fetch bot response
+    // eslint-disable-next-line
   }, [displayUserMessage]); // Add displayUserMessage as a dependency to resolve ESLint warning
 
   // Function to initialize chat event listeners
