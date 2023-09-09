@@ -8,6 +8,15 @@ const ChatInterface: React.FC = () => {
   // Create a state variable to hold all messages
   const [messages, setMessages] = useState<Array<{type: 'user' | 'bot', content: string}>>([]);
 
+  // Function to handle form submission
+  const handleFormSubmit = (event: Event) => {
+    event.preventDefault();
+    const userInput = getUserInput();
+    displayUserMessage(userInput);
+    // Clear user input and display typing indicator
+    // Fetch bot response logic will go here
+  };
+
   // Function to initialize chat event listeners
   const initializeChat = useCallback(() => {
     // Get form and user input elements
@@ -25,21 +34,12 @@ const ChatInterface: React.FC = () => {
     
     // Focus on the user input field
     userInput.focus();
-  }, []);
+  }, [handleFormSubmit]);
 
   // Use useEffect to call initializeChat when the component mounts
   useEffect(() => {
     initializeChat();
   }, [initializeChat]);
-
-  // Function to handle form submission
-  const handleFormSubmit = (event: Event) => {
-    event.preventDefault();
-    const userInput = getUserInput();
-    displayUserMessage(userInput);
-    // Clear user input and display typing indicator
-    // Fetch bot response logic would go here
-  };
 
   // Function to get user input
   const getUserInput = () => {
