@@ -14,9 +14,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, type }) => {
 
   // The JSX returned here defines how each chat message will be rendered
   return (
-    // Apply the determined CSS class to the message div
     <div className={messageClass}>
-      {/* Render the message text */}
       {message}
     </div>
   );
