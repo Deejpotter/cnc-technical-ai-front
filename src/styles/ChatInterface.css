@@ -1,8 +1,11 @@
 /* Style for top level container */
 #chat-container {
-  background-color: #f9f9f9; /* Light gray background */
-  height: calc(100vh - 200px); /* Adjusted height */
-  overflow-y: auto; /* Enables scrolling */
+  background-color: #f9f9f9;
+  /* Light gray background */
+  height: calc(100vh - 200px);
+  /* Adjusted height */
+  overflow-y: auto;
+  /* Enables scrolling */
 }
 
 /* Style for the message container */
@@ -49,32 +52,42 @@
 
 /* Keyframes for the typing animation */
 @keyframes typingAnimation {
-  0% { background-color: blue; }
-  50% { background-color: transparent; }
-  100% { background-color: blue; }
+  0% {
+    background-color: blue;
+  }
+
+  50% {
+    background-color: transparent;
+  }
+
+  100% {
+    background-color: blue;
+  }
 }
 
 
 /* Style for the active conversation */
 .list-group-item.active {
-  background-color: #007bff; /* Blue background for active item */
-  color: white; /* White text for active item */
+  background-color: #007bff;
+  /* Blue background for active item */
+  color: white;
+  /* White text for active item */
 }
 
 /* Style for the sliding menu */
 .slide-menu {
-    position: fixed;
-    top: 0;
-    left: -300px;
-    height: 100%;
-    width: 300px;
-    overflow-y: auto;
-    transition: left 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: -300px;
+  height: 100%;
+  width: 300px;
+  overflow-y: auto;
+  transition: left 0.3s ease;
 }
 
 /* Style for the sliding menu when it's visible */
 .slide-menu.show {
-    left: 0;
+  left: 0;
 }
 
 
@@ -99,4 +112,3 @@
   max-width: 70%;
   align-self: flex-start;
 }
-
