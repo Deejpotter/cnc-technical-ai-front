@@ -1,5 +1,5 @@
 // Import necessary modules from React and custom CSS
-import React, { useState, Dispatch, SetStateAction } from 'react';
+import React, { useState, Dispatch, SetStateAction, useEffect, useRef } from 'react';
 import '../styles/ChatInterface.css';  // Import custom CSS
 import ChatMessage from './ChatMessage';  // Import ChatMessage component
 import ConversationsList from './ConversationsList';  // Import the new ConversationsList component
@@ -14,6 +14,10 @@ export type ChatInterfaceProps = {
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ setShowConversations, showConversations }) => {
   // State to hold all chat messages
   const [messages, setMessages] = useState<Array<{ type: 'user' | 'bot', content: string }>>([]);
+  // Reference for auto-scrolling
+  const messagesEndRef = useRef(null);
+  // Auto-scroll when a new message is added
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });}, [messages]);
 
   // Function to handle form submission
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -21,7 +25,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ setShowConversations, sho
     const inputElement = event.currentTarget.elements.namedItem('user-input') as HTMLInputElement;  // Get the user input element
     const userInput = inputElement.value;  // Get the value of the user input
     inputElement.value = '';  // Clear the user input
-    // Add the user's message to the messages state
+    // Add the user's message to the messages state. Use the spread operator to preserve the previous messages then add the new message with the user input and 'user' type.
     setMessages(prevMessages => [...prevMessages, { type: 'user', content: `You: ${userInput}` }]);
     
     // Fetch the bot's response
@@ -44,32 +48,41 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ setShowConversations, sho
   };
 
   return (
-    <div className="d-flex flex-column h-90 w-75">
+    <div className="container d-flex flex-column" style={{ height: 'calc(100vh - 60px)' }}>  
       <div className="row flex-grow-1">
-        {/* Conversations list */}
-        {showConversations && (
-          <div className="col-md-3 border-right p-3">
-            <ConversationsList />
-          </div>
-        )}
-        {/* Main chat area */}
-        <div className="col-md p-3">
-          <div className="border rounded p-3">
-            <div>
+        
+        {/* Sidebar */}
+        <div className={`col-md-3 border-right p-3 collapse ${showConversations ? 'show' : 'd-md-block'}`} id="conversation-list">  
+          <ConversationsList />
+        </div>
+        
+        {/* Chat area */}
+        <div className="col-md p-3 d-flex flex-column">  
+          
+          {/* Chat container */}
+          <div className="border rounded p-3 flex-grow-1 d-flex flex-column" id="chat-container">
+            
+            {/* Message container */}
+            <div className="flex-grow-1 overflow-auto" id="message-container">  
               {messages.map((message, index) => (
                 <ChatMessage key={index} type={message.type} message={message.content} />
               ))}
+              
+              {/* Scroll anchor */}
+              <div ref={messagesEndRef}></div>  
             </div>
+            
+            {/* Chat form */}
+            <form className="form-inline bg-white p-2" id="chat-form" onSubmit={handleFormSubmit}> 
+              <input type="text" className="form-control mr-2 flex-grow-1" name="user-input" placeholder="Type your message..." />
+              <button type="submit" className="btn btn-primary">Send</button>
+            </form>
           </div>
-          {/* Form for user input */}
-          <form className="form-inline bg-white p-2" onSubmit={handleFormSubmit}>
-            <input type="text" className="form-control mr-2" name="user-input" placeholder="Type your message..." />
-            <button type="submit" className="btn btn-primary">Send</button>
-          </form>
         </div>
       </div>
     </div>
   );
+
 };
 
 // Export the ChatInterface component for use in other parts of the application
