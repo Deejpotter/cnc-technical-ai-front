@@ -1,5 +1,6 @@
 // Import React library
 import React from 'react';
+import '../styles/ChatMessage.css';
 
 // Define the properties that the ChatMessage component will receive
 type ChatMessageProps = {
