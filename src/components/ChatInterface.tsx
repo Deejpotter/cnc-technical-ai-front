@@ -1,116 +1,89 @@
-// Import React library and the custom CSS file
-import React, { useCallback, useEffect, useState } from 'react';
-import '../styles/ChatInterface.css';
-import ChatMessage from './ChatMessage'; // Import the ChatMessage component
+// Import necessary modules from React and custom CSS
+import React, { useState, Dispatch, SetStateAction, useEffect, useRef } from 'react';
+import '../styles/ChatInterface.css';  // Import custom CSS
+import ChatMessage from './ChatMessage';  // Import ChatMessage component
+import ConversationsList from './ConversationsList';  // Import the new ConversationsList component
+
+// The chat interface component receives setShowConversations and showConversations as props
+export type ChatInterfaceProps = {
+  setShowConversations: Dispatch<SetStateAction<boolean>>;
+  showConversations: boolean;
+};
 
 // Define the ChatInterface component as a functional component
-const ChatInterface: React.FC = () => {
-  // Create a state variable to hold all messages
-  const [messages, setMessages] = useState<Array<{type: 'user' | 'bot', content: string}>>([]);
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ setShowConversations, showConversations }) => {
+  // State to hold all chat messages
+  const [messages, setMessages] = useState<Array<{ type: 'user' | 'bot', content: string }>>([]);
+  // Reference for auto-scrolling
+  const messagesEndRef = useRef(null);
+  // Auto-scroll when a new message is added
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });}, [messages]);
 
-  // Function to get user input
-  const getUserInput = () => {
-    const inputElement = document.getElementById('user-input') as HTMLInputElement;
-    return inputElement.value;
-  };
+  // Function to handle form submission
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();  // Prevent default form submission behavior
+    const inputElement = event.currentTarget.elements.namedItem('user-input') as HTMLInputElement;  // Get the user input element
+    const userInput = inputElement.value;  // Get the value of the user input
+    inputElement.value = '';  // Clear the user input
+    // Add the user's message to the messages state. Use the spread operator to preserve the previous messages then add the new message with the user input and 'user' type.
+    setMessages(prevMessages => [...prevMessages, { type: 'user', content: `You: ${userInput}` }]);
+    
+    // Fetch the bot's response
+    const apiUrl = process.env.REACT_APP_API_URL || '';  // Get API URL from environment variable
+    try {
+      const response = await fetch(`${apiUrl}/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_message: userInput }),
+      });
 
-  // Function to display user message, wrapped in its own useCallback
-  const displayUserMessage = useCallback((message: string) => {
-    // Add the new message to the messages state variable
-    setMessages([...messages, { type: 'user', content: `You: ${message}`}]);
-  }, [messages]); // Add messages as a dependency to resolve ESLint warning
-
-  // Function to fetch bot response
-  const fetchBotResponse = async (userInput: string) : Promise<void> => {
-    const apiUrl = process.env.REACT_APP_API_URL || ''; // Get API URL from environment variable
-    const response = await fetch(`${apiUrl}/ask`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ user_message: userInput }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      setMessages([...messages, { type: 'bot', content: `Bot: ${data.bot_response}`}]);
-    } else {
-      console.error('Failed to fetch bot response');
+      if (response.ok) {
+        const data = await response.json();
+        // Add the bot's response to the messages state
+        setMessages(prevMessages => [...prevMessages, { type: 'bot', content: `Bot: ${data.bot_response}` }]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch bot response', error);
     }
   };
 
-  // Function to handle form submission, wrapped in its own useCallback
-  const handleFormSubmit = useCallback(async (event: Event) => {
-    event.preventDefault();
-    const userInput = getUserInput();
-    displayUserMessage(userInput);
-    await fetchBotResponse(userInput); // Fetch bot response
-    // eslint-disable-next-line
-  }, [displayUserMessage]); // Add displayUserMessage as a dependency to resolve ESLint warning
-
-  // Function to initialize chat event listeners
-  const initializeChat = useCallback(() => {
-    // Get form and user input elements
-    const form = document.getElementById('chat-form') as HTMLFormElement;
-    const userInput = document.getElementById('user-input') as HTMLInputElement;
-    
-    // Add event listeners
-    form.addEventListener('submit', handleFormSubmit);
-    userInput.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && event.shiftKey) {
-        event.preventDefault();
-        (event.target as HTMLInputElement).value += '\n';
-      }
-    });
-    
-    // Focus on the user input field
-    userInput.focus();
-  }, [handleFormSubmit]); // handleFormSubmit is now a dependency
-
-  // Use useEffect to call initializeChat when the component mounts
-  useEffect(() => {
-    initializeChat();
-  }, [initializeChat]);
-
-  // The JSX returned here defines the layout of the chat interface
   return (
-    // Main container for the entire chat interface
-    <div className="container mt-5" data-testid="chat-interface">
-      {/* Row to divide the sidebar and chat area */}
-      <div className="row">
-        {/* Sidebar for listing conversations */}
-        <div className="col-md-3 border-right p-3">
-          {/* Title for the conversation list */}
-          <h5 className="mb-3">Conversations</h5>
-          {/* List of conversations */}
-          <ul className="list-group mb-4">
-            <li className="list-group-item active">Conversation 1</li>
-            <li className="list-group-item">Conversation 2</li>
-          </ul>
+    <div className="container d-flex flex-column" style={{ height: 'calc(100vh - 60px)' }}>  
+      <div className="row flex-grow-1">
+        
+        {/* Sidebar */}
+        <div className={`col-md-3 border-right p-3 collapse ${showConversations ? 'show' : 'd-md-block'}`} id="conversation-list">  
+          <ConversationsList />
         </div>
-        {/* Main chat area */}
-        <div className="col-md p-3">
-          {/* Container for chat history and input form */}
-          <div className="border rounded p-3" id="chat-container">
-            {/* Inner Container for chat messages */}
-            <div id="message-container">
+        
+        {/* Chat area */}
+        <div className="col-md p-3 d-flex flex-column">  
+          
+          {/* Chat container */}
+          <div className="border rounded p-3 flex-grow-1 d-flex flex-column" id="chat-container">
+            
+            {/* Message container */}
+            <div className="flex-grow-1 overflow-auto" id="message-container">  
               {messages.map((message, index) => (
                 <ChatMessage key={index} type={message.type} message={message.content} />
               ))}
+              
+              {/* Scroll anchor */}
+              <div ref={messagesEndRef}></div>  
             </div>
+            
+            {/* Chat form */}
+            <form className="form-inline bg-white p-2" id="chat-form" onSubmit={handleFormSubmit}> 
+              <input type="text" className="form-control mr-2 flex-grow-1" name="user-input" placeholder="Type your message..." />
+              <button type="submit" className="btn btn-primary">Send</button>
+            </form>
           </div>
-          {/* Form for user to input messages */}
-          <form className="form-inline bg-white p-2" id="chat-form">
-            {/* Text input for user messages */}
-            <input type="text" className="form-control mr-2" id="user-input" placeholder="Type your message..." />
-            {/* Send button */}
-            <button type="submit" className="btn btn-primary">Send</button>
-          </form>
         </div>
       </div>
     </div>
   );
+
 };
 
-// Export the ChatInterface component to be used in other parts of the app
+// Export the ChatInterface component for use in other parts of the application
 export default ChatInterface;
